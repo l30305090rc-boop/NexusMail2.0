@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexusMail 2.0 Beta</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMail 2.0</title>
+
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-<div class="background"></div>
-<div class="glow glow-one"></div>
-<div class="glow glow-two"></div>
+<div class="container">
 
-<main class="card">
-
-    <div class="badge">VERSIÓN 2.0 BETA</div>
+    <div class="badge">
+        VERSIÓN 2.0 BETA
+    </div>
 
     <h1>NexusMail</h1>
 
@@ -23,24 +22,33 @@
         Plataforma segura de indexación temporal de correo electrónico
     </p>
 
-    <div class="notice">
-        No almacenamos contraseñas, archivos ni contenido confidencial después de cerrar la sesión.
+    <div class="warning-box">
+        No almacenamos contraseñas, archivos, ni contenido confidencial después de cerrar la sesión.
     </div>
 
-    <input type="text" placeholder="Ingrese su código de acceso">
+    <input 
+        type="text" 
+        placeholder="Ingrese su código de acceso"
+    >
 
-    <label class="terms">
-        <input type="checkbox">
-        <span>Acepto los términos y condiciones de uso temporal.</span>
-    </label>
+    <div class="checkbox-area">
+        <input type="checkbox" id="terms">
+        <label for="terms">
+            Acepto los términos y condiciones de uso temporal
+        </label>
+    </div>
 
-    <button>INGRESAR A LA PLATAFORMA</button>
+    <button>
+        INGRESAR A LA PLATAFORMA
+    </button>
 
-    <p class="footer">
+    <p class="footer-text">
         Acceso exclusivo para clientes autorizados.
     </p>
 
-</main>
+</div>
+
+<script src="app.js"></script>
 
 </body>
 </html>
