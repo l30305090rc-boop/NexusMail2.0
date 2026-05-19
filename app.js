@@ -1,5 +1,4 @@
 // Constantes
-const CODIGO_VALIDO = "NEXUS2026"; // Solo referencia, la validación ya se hizo en index.html
 const TIEMPO_INACTIVIDAD_SEG = 5 * 60; // 5 minutos
 
 // Elementos del DOM
@@ -18,7 +17,7 @@ let intervalo = null;
 let buscando = false;
 
 // --- Verificación de sesión ---
-if (!sessionStorage.getItem("nexus_auth") === "true") {
+if (sessionStorage.getItem("nexus_auth") !== "true") {
     window.location.href = "index.html";
 }
 
@@ -37,7 +36,7 @@ function renderCuentas() {
 }
 
 function limpiarSesion() {
-    sessionStorage.clear();
+    sessionStorage.removeItem("nexus_auth");
     cuentas = [];
     if (intervalo) {
         clearInterval(intervalo);
@@ -86,17 +85,21 @@ eventosActividad.forEach(evento => {
 
 // --- Conectar cuentas (simulación con OAuth en el futuro) ---
 function conectarCuenta(proveedor, dominio) {
-    // Evitar duplicados exactos (simplificado)
-    const emailDemo = `${proedor.toLowerCase()}-demo-${cuentas.length + 1}@${dominio}`;
+    // CORREGIDO: la variable se llama "proveedor", no "proedor"
+    const emailDemo = `${proveedor.toLowerCase()}-demo-${cuentas.length + 1}@${dominio}`;
+    
+    // Evitar duplicados exactos
     if (cuentas.some(c => c.email === emailDemo)) {
         alert(`La cuenta ${emailDemo} ya está conectada.`);
         return;
     }
+    
     cuentas.push({
         email: emailDemo,
         proveedor: proveedor,
         estado: "Conectada (demo)"
     });
+    
     renderCuentas();
     alert(`Demo: ${proveedor} conectado correctamente.\nEn un entorno real se usaría OAuth 2.0.`);
 }
@@ -104,6 +107,7 @@ function conectarCuenta(proveedor, dominio) {
 if (gmailBtn) {
     gmailBtn.addEventListener("click", () => conectarCuenta("Gmail", "gmail.com"));
 }
+
 if (outlookBtn) {
     outlookBtn.addEventListener("click", () => conectarCuenta("Outlook/Hotmail", "outlook.com"));
 }
@@ -112,21 +116,25 @@ if (outlookBtn) {
 if (searchBtn) {
     searchBtn.addEventListener("click", async () => {
         const palabra = searchInput.value.trim();
+        
         if (cuentas.length === 0) {
             alert("Primero debe conectar al menos una cuenta.");
             return;
         }
+        
         if (palabra === "") {
             alert("Ingrese una palabra clave para buscar.");
             return;
         }
+        
         if (buscando) return;
         buscando = true;
+        
         const originalText = searchBtn.innerText;
         searchBtn.innerText = "BUSCANDO...";
         searchBtn.disabled = true;
 
-        // Simulamos búsqueda asíncrona (en el futuro aquí irían las llamadas a APIs)
+        // Simulamos búsqueda asíncrona
         await new Promise(resolve => setTimeout(resolve, 1000));
 
         resultsDiv.innerHTML = cuentas.map(cuenta => `
@@ -149,7 +157,7 @@ if (logoutBtn) {
     logoutBtn.addEventListener("click", cerrarSesion);
 }
 
-// --- Pequeña utilidad para evitar XSS ---
+// --- Utilidad para evitar XSS ---
 function escapeHtml(str) {
     return str.replace(/[&<>]/g, function(m) {
         if (m === '&') return '&amp;';
