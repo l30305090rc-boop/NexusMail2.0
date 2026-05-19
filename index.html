@@ -1,55 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusMail 2.0</title>
-
-    <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NexusMail 2.0 Beta</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
-<body>
+<body class="login-page">
 
-<div class="container">
+<div class="bg"></div>
 
-    <div class="badge">
-        VERSIÓN 2.0 BETA
-    </div>
-
-    <h1>NexusMail</h1>
+<main class="login-card">
+    <div class="brand">NEXUSMAIL 2.0</div>
+    <h1>Acceso Seguro Beta</h1>
 
     <p class="subtitle">
-        Plataforma segura de indexación temporal de correo electrónico
+        Búsqueda simultánea en múltiples correos autorizados Gmail, Hotmail y Outlook.
     </p>
 
-    <div class="warning-box">
-        No almacenamos contraseñas, archivos ni contenido confidencial después de cerrar la sesión.
+    <div class="notice">
+        No solicitamos ni almacenamos contraseñas. Las cuentas se conectan mediante autorización segura.
     </div>
 
-    <input 
-        type="text" 
-        placeholder="Ingrese su código de acceso"
-    >
+    <input id="accessCode" type="text" placeholder="Código de acceso">
 
-    <div class="checkbox-area">
-        <input type="checkbox" id="terms">
+    <label class="terms">
+        <input id="terms" type="checkbox">
+        <span>Acepto términos, condiciones y uso temporal de la plataforma.</span>
+    </label>
 
-        <label for="terms">
-            Acepto los términos y condiciones de uso temporal
-        </label>
-    </div>
+    <button id="loginBtn">INGRESAR</button>
 
-    <button>
-        INGRESAR A LA PLATAFORMA
-    </button>
-
-    <p class="footer-text">
-        Acceso exclusivo para clientes autorizados.
-    </p>
-
-</div>
+    <p class="small">Sesión protegida con cierre automático por inactividad.</p>
+</main>
 
 <script src="app.js"></script>
-
 </body>
 </html>
