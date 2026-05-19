@@ -5,74 +5,82 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NexusMail 2.0 Beta</title>
 <link rel="stylesheet" href="style.css">
+<style>
+  /* Estilos de respaldo (por si style.css no carga) */
+  *{margin:0;padding:0;box-sizing:border-box;font-family:Arial, Helvetica, sans-serif;}
+  body.login-page{display:flex;align-items:center;justify-content:center;min-height:100vh;background:#020617;}
+  .bg{position:fixed;inset:0;background:radial-gradient(circle at top left, rgba(14,165,233,.35), transparent 35%), radial-gradient(circle at bottom right, rgba(99,102,241,.30), transparent 40%), linear-gradient(135deg,#020617,#000);z-index:-1;}
+  .login-card{width:440px;padding:42px;background:rgba(15,23,42,.86);border:1px solid rgba(148,163,184,.25);border-radius:28px;backdrop-filter:blur(20px);text-align:center;}
+  .brand{display:inline-block;color:#7dd3fc;border:1px solid rgba(125,211,252,.4);padding:8px 14px;border-radius:999px;font-size:12px;letter-spacing:2px;margin-bottom:18px;}
+  h1{font-size:38px;margin-bottom:14px;color:white;}
+  .subtitle,.small{color:#94a3b8;font-size:14px;}
+  .notice{background:rgba(14,165,233,.09);border:1px solid rgba(14,165,233,.25);color:#bae6fd;padding:15px;border-radius:16px;margin:22px 0;font-size:13px;}
+  input,button{width:100%;padding:15px;border-radius:14px;border:1px solid rgba(148,163,184,.25);outline:none;}
+  input{background:#020617;color:white;margin-bottom:16px;}
+  input:focus{border-color:#38bdf8;}
+  button{background:linear-gradient(135deg,#0ea5e9,#2563eb);color:white;font-weight:bold;cursor:pointer;margin-bottom:12px;transition:transform 0.2s, box-shadow 0.2s;}
+  button:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(14,165,233,.35);}
+  .terms{display:flex;gap:10px;text-align:left;color:#94a3b8;font-size:12px;margin-bottom:18px;}
+  .terms input{width:auto;}
+</style>
 </head>
-
 <body class="login-page">
-
 <div class="bg"></div>
-
 <main class="login-card">
     <div class="brand">NEXUSMAIL 2.0</div>
-
     <h1>Acceso Seguro Beta</h1>
-
-    <p class="subtitle">
-        Búsqueda simultánea en múltiples correos autorizados Gmail, Hotmail y Outlook.
-    </p>
-
-    <div class="notice">
-        No solicitamos ni almacenamos contraseñas. Las cuentas se conectan mediante autorización segura.
-    </div>
-
+    <p class="subtitle">Búsqueda simultánea en múltiples correos autorizados Gmail, Hotmail y Outlook.</p>
+    <div class="notice">No solicitamos ni almacenamos contraseñas. Las cuentas se conectan mediante autorización segura.</div>
     <input id="accessCode" type="text" placeholder="Código de acceso" autocomplete="off">
-
     <label class="terms">
         <input id="terms" type="checkbox">
         <span>Acepto términos, condiciones y uso temporal de la plataforma.</span>
     </label>
-
     <button id="loginBtn" type="button">INGRESAR</button>
-
-    <p class="small">
-        Sesión protegida con cierre automático por inactividad.
-    </p>
+    <p class="small">Sesión protegida con cierre automático por inactividad.</p>
 </main>
 
 <script>
-const CODIGO_VALIDO = "NEXUS2026";
+  const CODIGO_VALIDO = "NEXUS2026";
+  const loginBtn = document.getElementById("loginBtn");
+  const accessCode = document.getElementById("accessCode");
+  const terms = document.getElementById("terms");
+  let enviando = false;
 
-const loginBtn = document.getElementById("loginBtn");
-const accessCode = document.getElementById("accessCode");
-const terms = document.getElementById("terms");
+  // Si ya hay sesión activa, redirigir directamente al panel
+  if (sessionStorage.getItem("nexus_auth") === "true") {
+    window.location.href = "panel.html";
+  }
 
-loginBtn.addEventListener("click", function() {
+  function intentarLogin() {
+    if (enviando) return;
     const codigo = accessCode.value.trim();
-
     if (codigo === "") {
-        alert("Ingrese su código de acceso.");
-        return;
+      alert("Ingrese su código de acceso.");
+      return;
     }
-
     if (codigo !== CODIGO_VALIDO) {
-        alert("Código de acceso incorrecto.");
-        return;
+      alert("Código de acceso incorrecto.");
+      return;
     }
-
     if (!terms.checked) {
-        alert("Debe aceptar los términos y condiciones.");
-        return;
+      alert("Debe aceptar los términos y condiciones.");
+      return;
     }
-
+    enviando = true;
     sessionStorage.setItem("nexus_auth", "true");
-
     loginBtn.innerText = "VERIFICANDO...";
     loginBtn.disabled = true;
-
-    setTimeout(function() {
-        window.location.href = "panel.html";
+    setTimeout(() => {
+      window.location.href = "panel.html";
     }, 800);
-});
-</script>
+  }
 
+  loginBtn.addEventListener("click", intentarLogin);
+  // Soporte para tecla Enter
+  accessCode.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") intentarLogin();
+  });
+</script>
 </body>
 </html>
