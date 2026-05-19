@@ -1,40 +1,43 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NexusMail 2.0 Beta</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NexusMail 2.0 Beta</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body class="login-page">
 
-<div class="bg"></div>
+  <div class="bg"></div>
 
-<main class="login-card">
+  <main class="login-card">
     <div class="brand">NEXUSMAIL 2.0</div>
+
     <h1>Acceso Seguro Beta</h1>
 
     <p class="subtitle">
-        Búsqueda simultánea en múltiples correos autorizados Gmail, Hotmail y Outlook.
+      Búsqueda simultánea en múltiples correos autorizados Gmail, Hotmail y Outlook.
     </p>
 
     <div class="notice">
-        No solicitamos ni almacenamos contraseñas. Las cuentas se conectan mediante autorización segura.
+      No solicitamos ni almacenamos contraseñas. Las cuentas se conectan mediante autorización segura.
     </div>
 
-    <input id="accessCode" type="text" placeholder="Código de acceso">
+    <input id="accessCode" type="text" placeholder="Código de acceso" autocomplete="off">
 
     <label class="terms">
-        <input id="terms" type="checkbox">
-        <span>Acepto términos, condiciones y uso temporal de la plataforma.</span>
+      <input id="terms" type="checkbox">
+      <span>Acepto términos, condiciones y uso temporal de la plataforma.</span>
     </label>
 
-    <button id="loginBtn">INGRESAR</button>
+    <button id="loginBtn" type="button">INGRESAR</button>
 
-    <p class="small">Sesión protegida con cierre automático por inactividad.</p>
-</main>
+    <p class="small">
+      Sesión protegida con cierre automático por inactividad.
+    </p>
+  </main>
 
-<script src="app.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>
