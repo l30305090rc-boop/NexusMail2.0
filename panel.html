@@ -6,41 +6,61 @@
 <title>Panel NexusMail</title>
 <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="panel-page">
+
 <div class="panel">
+
 <header class="panel-header">
     <div>
         <div class="brand">PANEL BETA SEGURO</div>
         <h1>NexusMail Secure Search</h1>
-        <p>Conecta varias cuentas autorizadas y busca información en todas al mismo tiempo.</p>
+        <p>Conecta Gmail de forma segura y busca correos sin guardar contraseñas.</p>
     </div>
+
     <button id="logoutBtn" class="danger">Cerrar sesión</button>
 </header>
+
 <section class="timer-box">
-    Sesión activa. Cierre automático en <strong id="timer">05:00</strong> por inactividad.
+    Sesión activa. Cierre automático en <strong id="timer">05:00</strong>.
 </section>
+
 <section class="grid">
+
     <div class="box">
         <h2>Conectar cuentas</h2>
-        <p>Conexión segura preparada para Gmail API y Microsoft Graph.</p>
+        <p>Conexión segura mediante Google OAuth.</p>
+
         <button id="gmailBtn">+ Conectar Gmail</button>
         <button id="outlookBtn" class="secondary">+ Conectar Hotmail / Outlook</button>
     </div>
+
     <div class="box">
-        <h2>Buscar en todas</h2>
+        <h2>Buscar en Gmail</h2>
         <input id="searchInput" type="text" placeholder="Ejemplo: ChatGPT, factura, China...">
-        <button id="searchBtn">BUSCAR SIMULTÁNEAMENTE</button>
+        <button id="searchBtn">BUSCAR EN CORREOS</button>
     </div>
+
 </section>
+
 <section class="box">
     <h2>Cuentas conectadas</h2>
-    <div id="accountsList" class="accounts">Ninguna cuenta conectada todavía.</div>
+    <div id="accountsList" class="accounts">
+        Ninguna cuenta conectada todavía.
+    </div>
 </section>
+
 <section class="box">
-    <h2>Resultados</h2>
-    <div id="results">Aquí aparecerán los resultados de búsqueda.</div>
+    <h2>Resultados Gmail</h2>
+    <div id="results">
+        Aquí aparecerán los correos encontrados.
+    </div>
 </section>
+
 </div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="app.js"></script>
+
 </body>
 </html>
