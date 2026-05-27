@@ -1,31 +1,118 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Plataforma segura de indexación temporal de correo electrónico">
-  <title>NexusMail 2.0 - Acceso</title>
-  <link rel="stylesheet" href="estilo.css">
+    <meta charset="UTF-8">
+    <title>NexusMail</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: white;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .caja {
+            background: #161b22;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            width: 350px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 15px 0;
+            background: #21262d;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+        button {
+            background: #00ffff;
+            color: black;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #00cccc;
+        }
+        .verde {
+            color: #00ff00;
+            margin-top: 10px;
+        }
+        .rojo {
+            color: #ff4444;
+            margin-top: 10px;
+        }
+        .codigo {
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0,255,255,0.1);
+            border-radius: 8px;
+            font-size: 18px;
+        }
+        .codigo span {
+            color: #00ffff;
+            font-family: monospace;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-
-  <div class="fondo"></div>
-
-  <div class="login-box">
-    <h1>🚀 NexusMail 2.0</h1>
-    <p class="subtitulo">
-      Plataforma segura de indexación temporal de correo electrónico - Beta 2.0
-    </p>
-
-    <input type="password" id="codigo" placeholder="🔑 Código de acceso" autocomplete="off">
-    <button onclick="validarCodigo()">Ingresar al panel</button>
-    <div id="mensaje"></div>
-    
-    <div class="info-codigo">
-      <small>🔐 Código de acceso: <strong>NEXUS2026</strong></small>
+    <div class="caja">
+        <h1 style="color:#00ffff">🚀 NexusMail</h1>
+        <p>Indexación temporal de correos</p>
+        
+        <input type="text" id="codigo" placeholder="Escribe el código" autocomplete="off">
+        <button onclick="revisar()">INGRESAR</button>
+        <div id="mensaje"></div>
+        
+        <div class="codigo">
+            📋 Código correcto: <span>NEXUS2026</span>
+        </div>
     </div>
-  </div>
 
-  <script src="app.js"></script>
+    <script>
+        function revisar() {
+            const loQueEscribio = document.getElementById('codigo').value;
+            const mensajeLugar = document.getElementById('mensaje');
+            
+            // Mostrar lo que escribió el usuario
+            console.log("Usuario escribió: '" + loQueEscribio + "'");
+            
+            // Comparación exacta
+            if (loQueEscribio === "NEXUS2026") {
+                mensajeLugar.innerHTML = '✅ CORRECTO - Redirigiendo...';
+                mensajeLugar.className = 'verde';
+                sessionStorage.setItem('acceso_validado', 'true');
+                setTimeout(function() {
+                    window.location.href = 'panel.html';
+                }, 1000);
+            } else {
+                mensajeLugar.innerHTML = '❌ INCORRECTO - Escribe: NEXUS2026';
+                mensajeLugar.className = 'rojo';
+                document.getElementById('codigo').value = '';
+                document.getElementById('codigo').focus();
+            }
+        }
+        
+        // Permitir Enter
+        document.getElementById('codigo').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                revisar();
+            }
+        });
+    </script>
 </body>
 </html>
