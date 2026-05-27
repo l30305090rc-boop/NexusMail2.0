@@ -1,66 +1,40 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Panel NexusMail</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Panel de control NexusMail 2.0">
+  <title>NexusMail 2.0 - Panel</title>
+  <link rel="stylesheet" href="estilo.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
+<body>
 
-<body class="panel-page">
-
-<div class="panel">
-
-<header class="panel-header">
-    <div>
-        <div class="brand">PANEL BETA SEGURO</div>
-        <h1>NexusMail Secure Search</h1>
-        <p>Conecta Gmail de forma segura y busca correos sin guardar contraseñas.</p>
+  <div class="panel">
+    <div class="header-panel">
+      <h1>🚀 NexusMail 2.0</h1>
+      <div id="temporizador" class="temporizador">⏱️ 5:00</div>
     </div>
 
-    <button id="logoutBtn" class="danger">Cerrar sesión</button>
-</header>
-
-<section class="timer-box">
-    Sesión activa. Cierre automático en <strong id="timer">05:00</strong>.
-</section>
-
-<section class="grid">
-
-    <div class="box">
-        <h2>Conectar cuentas</h2>
-        <p>Conexión segura mediante Google OAuth.</p>
-
-        <button id="gmailBtn">+ Conectar Gmail</button>
-        <button id="outlookBtn" class="secondary">+ Conectar Hotmail / Outlook</button>
+    <div class="acciones">
+      <button id="btnConectar" onclick="iniciarGoogleOAuth()">
+        🔌 Conectar Gmail
+      </button>
+      <button onclick="cerrarSesion()">
+        🚪 Cerrar sesión
+      </button>
     </div>
 
-    <div class="box">
-        <h2>Buscar en Gmail</h2>
-        <input id="searchInput" type="text" placeholder="Ejemplo: ChatGPT, factura, China...">
-        <button id="searchBtn">BUSCAR EN CORREOS</button>
+    <div class="buscador">
+      <input type="text" id="buscar" placeholder="📧 Buscar correos..." autocomplete="off">
+      <button onclick="buscarCorreos()">🔍 Buscar</button>
     </div>
 
-</section>
+    <div id="estado" class="estado"></div>
+    <div id="lista-cuentas"></div>
+    <div id="resultados"></div>
+  </div>
 
-<section class="box">
-    <h2>Cuentas conectadas</h2>
-    <div id="accountsList" class="accounts">
-        Ninguna cuenta conectada todavía.
-    </div>
-</section>
-
-<section class="box">
-    <h2>Resultados Gmail</h2>
-    <div id="results">
-        Aquí aparecerán los correos encontrados.
-    </div>
-</section>
-
-</div>
-
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="app.js"></script>
-
+  <script src="app.js"></script>
 </body>
 </html>
