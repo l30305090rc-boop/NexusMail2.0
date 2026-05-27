@@ -1,40 +1,232 @@
 <!DOCTYPE html>
-<html lang="es">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Panel de control NexusMail 2.0">
-  <title>NexusMail 2.0 - Panel</title>
-  <link rel="stylesheet" href="estilo.css">
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <meta charset="UTF-8">
+    <title>Panel NexusMail</title>
+    <style>
+        body {
+            background: #0d1117;
+            color: white;
+            font-family: Arial;
+            padding: 20px;
+        }
+        .panel {
+            max-width: 700px;
+            margin: 0 auto;
+            background: #161b22;
+            padding: 30px;
+            border-radius: 20px;
+        }
+        button {
+            background: #00ffff;
+            color: black;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        input {
+            padding: 10px;
+            background: #21262d;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            width: 70%;
+        }
+        .info {
+            margin: 20px 0;
+            padding: 10px;
+            background: rgba(0,255,255,0.05);
+            border-radius: 8px;
+            text-align: center;
+        }
+        .cuenta {
+            background: #21262d;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+        }
+        .correo {
+            background: #21262d;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+            border-left: 3px solid #ffaa00;
+        }
+    </style>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-
-  <div class="panel">
-    <div class="header-panel">
-      <h1>🚀 NexusMail 2.0</h1>
-      <div id="temporizador" class="temporizador">⏱️ 5:00</div>
+    <div class="panel">
+        <h1 style="color:#00ffff">🚀 NexusMail Panel</h1>
+        <div id="timer" style="text-align:right">⏱️ 5:00</div>
+        
+        <button onclick="conectar()">🔌 Conectar Gmail</button>
+        <button onclick="salir()">🚪 Cerrar sesión</button>
+        
+        <div style="margin: 20px 0">
+            <input type="text" id="buscar" placeholder="Buscar correos...">
+            <button onclick="buscar()">🔍 Buscar</button>
+        </div>
+        
+        <div id="estado" class="info">💡 Haz clic en Conectar Gmail</div>
+        <div id="cuentas"></div>
+        <div id="resultados"></div>
     </div>
 
-    <div class="acciones">
-      <button id="btnConectar" onclick="iniciarGoogleOAuth()">
-        🔌 Conectar Gmail
-      </button>
-      <button onclick="cerrarSesion()">
-        🚪 Cerrar sesión
-      </button>
-    </div>
-
-    <div class="buscador">
-      <input type="text" id="buscar" placeholder="📧 Buscar correos..." autocomplete="off">
-      <button onclick="buscarCorreos()">🔍 Buscar</button>
-    </div>
-
-    <div id="estado" class="estado"></div>
-    <div id="lista-cuentas"></div>
-    <div id="resultados"></div>
-  </div>
-
-  <script src="app.js"></script>
+    <script>
+        // Verificar que viene del login
+        if (sessionStorage.getItem('acceso_validado') !== 'true') {
+            window.location.href = 'index.html';
+        }
+        
+        const CLIENT_ID = "279891205598-1cmheiplrhOOrOt63soodjn791j19kob.apps.googleusercontent.com";
+        let miToken = null;
+        let tiempoRestante = 300;
+        let intervaloReloj = null;
+        
+        function conectar() {
+            const estado = document.getElementById('estado');
+            estado.innerHTML = '🔄 Conectando con Google...';
+            
+            const cliente = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/gmail.readonly',
+                callback: function(resp) {
+                    if (resp.access_token) {
+                        miToken = resp.access_token;
+                        sessionStorage.setItem('gmail_token', miToken);
+                        estado.innerHTML = '✅ Conectado a Gmail';
+                        cargarDatos();
+                        iniciarReloj();
+                    } else {
+                        estado.innerHTML = '⚠️ No se pudo conectar';
+                    }
+                }
+            });
+            cliente.requestAccessToken();
+        }
+        
+        async function cargarDatos() {
+            try {
+                const respuesta = await fetch('https://gmail.googleapis.com/gmail/v1/users/me/profile', {
+                    headers: { 'Authorization': `Bearer ${miToken}` }
+                });
+                const datos = await respuesta.json();
+                document.getElementById('cuentas').innerHTML = `
+                    <div class="cuenta">
+                        <strong>📧 ${datos.emailAddress}</strong><br>
+                        Mensajes: ${datos.messagesTotal || 0}
+                    </div>
+                `;
+            } catch(e) {
+                console.log(e);
+            }
+        }
+        
+        async function buscar() {
+            const busqueda = document.getElementById('buscar').value;
+            const resultadosDiv = document.getElementById('resultados');
+            
+            if (!busqueda) {
+                resultadosDiv.innerHTML = '<div class="info">✏️ Escribe algo</div>';
+                return;
+            }
+            if (!miToken) {
+                resultadosDiv.innerHTML = '<div class="info">🔌 Conecta Gmail primero</div>';
+                return;
+            }
+            
+            resultadosDiv.innerHTML = '<div class="info">🔍 Buscando...</div>';
+            
+            try {
+                const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(busqueda)}&maxResults=5`;
+                const respuesta = await fetch(url, {
+                    headers: { 'Authorization': `Bearer ${miToken}` }
+                });
+                const datos = await respuesta.json();
+                
+                if (!datos.messages || datos.messages.length === 0) {
+                    resultadosDiv.innerHTML = '<div class="info">📭 No hay correos</div>';
+                    return;
+                }
+                
+                resultadosDiv.innerHTML = '';
+                for (let msg of datos.messages) {
+                    const detalleResp = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+                        headers: { 'Authorization': `Bearer ${miToken}` }
+                    });
+                    const detalle = await detalleResp.json();
+                    
+                    let de = 'Desconocido';
+                    let asunto = 'Sin asunto';
+                    if (detalle.payload && detalle.payload.headers) {
+                        const deHeader = detalle.payload.headers.find(h => h.name === 'From');
+                        const asuntoHeader = detalle.payload.headers.find(h => h.name === 'Subject');
+                        if (deHeader) de = deHeader.value;
+                        if (asuntoHeader) asunto = asuntoHeader.value;
+                    }
+                    
+                    resultadosDiv.innerHTML += `
+                        <div class="correo">
+                            <strong>📧 ${asunto}</strong><br>
+                            👤 ${de}
+                        </div>
+                    `;
+                }
+            } catch(e) {
+                resultadosDiv.innerHTML = '<div class="info">❌ Error</div>';
+            }
+        }
+        
+        function iniciarReloj() {
+            if (intervaloReloj) clearInterval(intervaloReloj);
+            tiempoRestante = 300;
+            actualizarReloj();
+            intervaloReloj = setInterval(function() {
+                if (tiempoRestante <= 1) {
+                    salir();
+                } else {
+                    tiempoRestante--;
+                    actualizarReloj();
+                }
+            }, 1000);
+        }
+        
+        function actualizarReloj() {
+            const minutos = Math.floor(tiempoRestante / 60);
+            const segundos = tiempoRestante % 60;
+            document.getElementById('timer').innerHTML = `⏱️ ${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+        }
+        
+        function reiniciarReloj() {
+            if (miToken) {
+                tiempoRestante = 300;
+                actualizarReloj();
+            }
+        }
+        
+        function salir() {
+            miToken = null;
+            if (intervaloReloj) clearInterval(intervaloReloj);
+            sessionStorage.removeItem('gmail_token');
+            sessionStorage.removeItem('acceso_validado');
+            window.location.href = 'index.html';
+        }
+        
+        // Reiniciar reloj con actividad del usuario
+        document.addEventListener('mousemove', reiniciarReloj);
+        document.addEventListener('keydown', reiniciarReloj);
+        document.addEventListener('click', reiniciarReloj);
+        
+        // Recuperar sesión guardada
+        const tokenGuardado = sessionStorage.getItem('gmail_token');
+        if (tokenGuardado) {
+            miToken = tokenGuardado;
+            cargarDatos();
+            iniciarReloj();
+        }
+    </script>
 </body>
 </html>
