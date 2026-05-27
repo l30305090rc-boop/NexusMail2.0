@@ -1,227 +1,312 @@
+// ========== CONFIGURACIÓN ==========
 const CODIGO_VALIDO = "NEXUS2026";
-
-const GOOGLE_CLIENT_ID = "279891205598-1cmheip1rh00r0t63soodjn791jl9kob.apps.googleusercontent.com";
-
+const ID_CLIENTE_DE_GOOGLE = "279891205598-1cmheiplrhOOrOt63soodjn791j19kob.apps.googleusercontent.com";
 const GMAIL_SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
-
 const TIEMPO_INACTIVIDAD = 5 * 60;
+
 let tiempoRestante = TIEMPO_INACTIVIDAD;
 let intervalo = null;
-
 let gmailToken = null;
-let tokenClient = null;
+let tokenCliente = null;
 let cuentas = [];
 
-/* LOGIN */
-const loginBtn = document.getElementById("loginBtn");
-
-if (loginBtn) {
-    loginBtn.addEventListener("click", () => {
-        const codigo = document.getElementById("accessCode").value.trim();
-        const terms = document.getElementById("terms").checked;
-
-        if (codigo !== CODIGO_VALIDO) {
-            alert("Código incorrecto.");
-            return;
-        }
-
-        if (!terms) {
-            alert("Debe aceptar los términos.");
-            return;
-        }
-
-        sessionStorage.setItem("nexus_auth", "true");
-        window.location.href = "panel.html";
-    });
+// ========== UTILIDADES ==========
+function esperarGoogle() {
+  return new Promise((resolve) => {
+    if (window.google && google.accounts) {
+      resolve();
+      return;
+    }
+    const intervaloGoogle = setInterval(() => {
+      if (window.google && google.accounts) {
+        clearInterval(intervaloGoogle);
+        resolve();
+      }
+    }, 100);
+  });
 }
 
-/* PANEL */
-if (window.location.pathname.includes("panel.html")) {
+function escaparHTML(texto) {
+  if (!texto) return '';
+  const div = document.createElement('div');
+  div.textContent = texto;
+  return div.innerHTML;
+}
 
-    if (sessionStorage.getItem("nexus_auth") !== "true") {
-        window.location.href = "index.html";
+function mostrarEstado(mensaje, tipo) {
+  const estadoDiv = document.getElementById("estado");
+  if (!estadoDiv) return;
+  estadoDiv.innerHTML = mensaje;
+  if (tipo === "success") {
+    estadoDiv.style.color = "#00ff00";
+    estadoDiv.style.background = "rgba(0, 255, 0, 0.1)";
+    estadoDiv.style.border = "1px solid #00ff00";
+  } else if (tipo === "warning") {
+    estadoDiv.style.color = "#ffaa00";
+    estadoDiv.style.background = "rgba(255, 170, 0, 0.1)";
+    estadoDiv.style.border = "1px solid #ffaa00";
+  } else {
+    estadoDiv.style.color = "#00ffff";
+    estadoDiv.style.background = "rgba(0, 255, 255, 0.05)";
+    estadoDiv.style.border = "1px solid rgba(0, 255, 255, 0.2)";
+  }
+  setTimeout(() => {
+    if (estadoDiv.innerHTML === mensaje && tipo !== "success") {
+      estadoDiv.innerHTML = "💡 Conecta Gmail para empezar";
+      estadoDiv.style.color = "#888";
+      estadoDiv.style.border = "none";
     }
+  }, 4000);
+}
 
-    const gmailBtn = document.getElementById("gmailBtn");
-    const outlookBtn = document.getElementById("outlookBtn");
-    const searchBtn = document.getElementById("searchBtn");
-    const searchInput = document.getElementById("searchInput");
-    const accountsList = document.getElementById("accountsList");
-    const results = document.getElementById("results");
-    const logoutBtn = document.getElementById("logoutBtn");
-    const timer = document.getElementById("timer");
+// ========== LOGIN ==========
+function validarCodigo() {
+  const codigoInput = document.getElementById("codigo");
+  const codigo = codigoInput.value.trim();
+  const mensaje = document.getElementById("mensaje");
+  mensaje.innerHTML = "";
+  
+  if (codigo === "") {
+    mensaje.innerHTML = "✨ Ingresa el código NEXUS2026";
+    mensaje.style.color = "#ffaa00";
+    return;
+  }
+  
+  if (codigo === CODIGO_VALIDO) {
+    mensaje.innerHTML = "🎉 ¡Acceso concedido! Redirigiendo...";
+    mensaje.style.color = "#00ff00";
+    sessionStorage.setItem("acceso_validado", "true");
+    setTimeout(() => {
+      window.location.href = "panel.html";
+    }, 800);
+  } else {
+    mensaje.innerHTML = "🔐 Código incorrecto. Prueba con: NEXUS2026";
+    mensaje.style.color = "#ffaa00";
+    codigoInput.value = "";
+    codigoInput.focus();
+  }
+}
 
-    function esperarGoogle() {
-        if (window.google && google.accounts && google.accounts.oauth2) {
-            iniciarGoogleOAuth();
+function verificarAcceso() {
+  if (sessionStorage.getItem("acceso_validado") !== "true") {
+    window.location.href = "index.html";
+  }
+}
+
+// ========== GMAIL OAUTH ==========
+async function iniciarGoogleOAuth() {
+  mostrarEstado("🔄 Conectando con Google...", "info");
+  
+  if (!window.google || !google.accounts) {
+    mostrarEstado("📡 Cargando API de Google...", "warning");
+    await esperarGoogle();
+  }
+  
+  try {
+    tokenCliente = google.accounts.oauth2.initTokenClient({
+      client_id: ID_CLIENTE_DE_GOOGLE,
+      scope: GMAIL_SCOPE,
+      callback: async (respuesta) => {
+        if (respuesta.access_token) {
+          gmailToken = respuesta.access_token;
+          sessionStorage.setItem("gmail_token", gmailToken);
+          await conectarGmail();
+          iniciarTemporizador();
+          activarDetectorInactividad();
+          mostrarEstado("✅ ¡Conectado a Gmail exitosamente!", "success");
         } else {
-            setTimeout(esperarGoogle, 300);
+          mostrarEstado("🔄 Selecciona una cuenta de Google", "warning");
         }
-    }
+      },
+    });
+    tokenCliente.requestAccessToken();
+  } catch (error) {
+    mostrarEstado("💡 Haz clic en 'Conectar Gmail' y autoriza", "warning");
+  }
+}
 
-    function iniciarGoogleOAuth() {
-        tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: GOOGLE_CLIENT_ID,
-            scope: GMAIL_SCOPE,
-            callback: async (response) => {
-                if (response.error) {
-                    alert("Error conectando Gmail.");
-                    return;
-                }
-
-                gmailToken = response.access_token;
-
-                cuentas.push({
-                    email: "Gmail autorizado",
-                    proveedor: "Gmail",
-                    estado: "Conectada"
-                });
-
-                renderCuentas();
-                alert("Gmail conectado correctamente.");
-            }
-        });
-    }
-
-    function conectarGmail() {
-        if (!tokenClient) {
-            alert("Google OAuth todavía está cargando. Intenta de nuevo.");
-            return;
-        }
-
-        tokenClient.requestAccessToken();
-    }
-
-    async function buscarGmail(palabra) {
-        if (!gmailToken) {
-            alert("Primero conecte Gmail.");
-            return;
-        }
-
-        results.innerHTML = "Buscando correos...";
-
-        try {
-            const query = encodeURIComponent(palabra);
-
-            const respuesta = await fetch(
-                https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${query}&maxResults=10,
-                {
-                    headers: {
-                        Authorization: Bearer ${gmailToken}
-                    }
-                }
-            );
-
-            const data = await respuesta.json();
-
-            if (!data.messages || data.messages.length === 0) {
-                results.innerHTML = "No se encontraron correos con esa búsqueda.";
-                return;
-            }
-
-            let html = "";
-
-            for (const mensaje of data.messages) {
-                const detalle = await fetch(
-                    https://gmail.googleapis.com/gmail/v1/users/me/messages/${mensaje.id}?format=metadata,
-                    {
-                        headers: {
-                            Authorization: Bearer ${gmailToken}
-                        }
-                    }
-                );
-
-                const correo = await detalle.json();
-
-                const headers = correo.payload.headers;
-
-                const subject = headers.find(h => h.name === "Subject")?.value || "Sin asunto";
-                const from = headers.find(h => h.name === "From")?.value || "Remitente no disponible";
-                const date = headers.find(h => h.name === "Date")?.value || "";
-
-                html += `
-                    <div class="result-item">
-                        <strong>${subject}</strong><br>
-                        <small>De: ${from}</small><br>
-                        <small>Fecha: ${date}</small><br>
-                        <p>${correo.snippet || ""}</p>
-                    </div>
-                `;
-            }
-
-            results.innerHTML = html;
-
-        } catch (error) {
-            console.error(error);
-            results.innerHTML = "Error leyendo Gmail.";
-        }
-    }
-
-    function renderCuentas() {
-        if (cuentas.length === 0) {
-            accountsList.innerHTML = "Ninguna cuenta conectada todavía.";
-            return;
-        }
-
-        accountsList.innerHTML = cuentas.map((cuenta, index) => `
-            <div class="account-ok">
-                ✔️ Cuenta ${index + 1}: ${cuenta.email} — ${cuenta.estado}
-            </div>
-        `).join("");
-    }
-
-    function cerrarSesion() {
-        sessionStorage.clear();
+async function conectarGmail() {
+  if (!gmailToken) return;
+  
+  try {
+    const respuesta = await fetch("https://gmail.googleapis.com/gmail/v1/users/me/profile", {
+      headers: { "Authorization": `Bearer ${gmailToken}` }
+    });
+    
+    if (!respuesta.ok) {
+      if (respuesta.status === 401) {
+        sessionStorage.removeItem("gmail_token");
         gmailToken = null;
-        cuentas = [];
-        window.location.href = "index.html";
+        mostrarEstado("🔁 Sesión expirada, reconecta Gmail", "warning");
+      }
+      return;
     }
-
-    function iniciarTemporizador() {
-        intervalo = setInterval(() => {
-            tiempoRestante--;
-
-            const min = String(Math.floor(tiempoRestante / 60)).padStart(2, "0");
-            const sec = String(tiempoRestante % 60).padStart(2, "0");
-
-            timer.textContent = ${min}:${sec};
-
-            if (tiempoRestante <= 0) {
-                clearInterval(intervalo);
-                alert("Sesión cerrada automáticamente por inactividad.");
-                cerrarSesion();
-            }
-        }, 1000);
-    }
-
-    function reiniciarTiempo() {
-        tiempoRestante = TIEMPO_INACTIVIDAD;
-    }
-
-    ["click", "mousemove", "keydown", "scroll", "touchstart"].forEach(evento => {
-        document.addEventListener(evento, reiniciarTiempo);
-    });
-
-    gmailBtn.addEventListener("click", conectarGmail);
-
-    outlookBtn.addEventListener("click", () => {
-        alert("Outlook/Hotmail se conecta después con Microsoft Graph.");
-    });
-
-    searchBtn.addEventListener("click", () => {
-        const palabra = searchInput.value.trim();
-
-        if (palabra === "") {
-            alert("Ingrese una palabra clave.");
-            return;
-        }
-
-        buscarGmail(palabra);
-    });
-
-    logoutBtn.addEventListener("click", cerrarSesion);
-
+    
+    const datos = await respuesta.json();
+    cuentas = [{
+      email: datos.emailAddress,
+      mensajes: datos.messagesTotal || 0,
+      hilos: datos.threadsTotal || 0,
+    }];
     renderCuentas();
-    iniciarTemporizador();
-    esperarGoogle();
+    mostrarEstado(`✅ Bienvenido ${datos.emailAddress}`, "success");
+    
+  } catch (error) {
+    console.log("Error controlado");
+  }
+}
+
+function renderCuentas() {
+  const contenedor = document.getElementById("lista-cuentas");
+  if (!contenedor) return;
+  contenedor.innerHTML = "";
+  
+  cuentas.forEach(cuenta => {
+    const div = document.createElement("div");
+    div.className = "cuenta";
+    div.innerHTML = `<h3>📧 ${escaparHTML(cuenta.email)}</h3><p>📬 Mensajes: ${cuenta.mensajes.toLocaleString()}</p><p>🧵 Hilos: ${cuenta.hilos.toLocaleString()}</p>`;
+    contenedor.appendChild(div);
+  });
+}
+
+// ========== BÚSQUEDA ==========
+async function buscarCorreos() {
+  const busqueda = document.getElementById("buscar").value.trim();
+  const resultadosDiv = document.getElementById("resultados");
+  
+  if (!busqueda) {
+    resultadosDiv.innerHTML = '<div class="mensaje-info">📝 Escribe algo para buscar</div>';
+    return;
+  }
+  
+  if (!gmailToken) {
+    resultadosDiv.innerHTML = '<div class="mensaje-info">🔌 Conecta Gmail para buscar</div>';
+    return;
+  }
+  
+  resultadosDiv.innerHTML = '<div class="mensaje-info">🔍 Buscando...</div>';
+  
+  try {
+    const url = `https://gmail.googleapis.com/gmail/v1/users/me/messages?q=${encodeURIComponent(busqueda)}&maxResults=10`;
+    const respuesta = await fetch(url, {
+      headers: { "Authorization": `Bearer ${gmailToken}` }
+    });
+    
+    if (!respuesta.ok) {
+      if (respuesta.status === 401) {
+        resultadosDiv.innerHTML = '<div class="mensaje-info">🔌 Reconecta Gmail para buscar</div>';
+      }
+      return;
+    }
+    
+    const datos = await respuesta.json();
+    resultadosDiv.innerHTML = "";
+    
+    if (!datos.messages || datos.messages.length === 0) {
+      resultadosDiv.innerHTML = '<div class="mensaje-info">📭 No se encontraron correos</div>';
+      return;
+    }
+    
+    for (let msg of datos.messages) {
+      try {
+        const detalleResp = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/messages/${msg.id}?format=metadata&metadataHeaders=From&metadataHeaders=Subject`, {
+          headers: { "Authorization": `Bearer ${gmailToken}` }
+        });
+        const detalleData = await detalleResp.json();
+        
+        let from = "Desconocido", subject = "Sin asunto";
+        if (detalleData.payload && detalleData.payload.headers) {
+          const fromHeader = detalleData.payload.headers.find(h => h.name === "From");
+          const subjectHeader = detalleData.payload.headers.find(h => h.name === "Subject");
+          if (fromHeader) from = fromHeader.value;
+          if (subjectHeader) subject = subjectHeader.value;
+        }
+        
+        const div = document.createElement("div");
+        div.className = "correo";
+        div.innerHTML = `<strong>📧 ${escaparHTML(subject)}</strong><br>👤 ${escaparHTML(from)}<br><small>📅 ${escaparHTML(msg.id.substring(0, 15))}...</small>`;
+        resultadosDiv.appendChild(div);
+      } catch (error) {}
+    }
+    
+    if (resultadosDiv.children.length > 0) {
+      mostrarEstado(`📬 ${resultadosDiv.children.length} correos encontrados`, "success");
+    }
+  } catch (error) {}
+}
+
+// ========== TEMPORIZADOR ==========
+function iniciarTemporizador() {
+  if (intervalo) clearInterval(intervalo);
+  tiempoRestante = TIEMPO_INACTIVIDAD;
+  actualizarTemporizadorDisplay();
+  
+  intervalo = setInterval(() => {
+    if (tiempoRestante <= 1) {
+      cerrarSesion();
+    } else {
+      tiempoRestante--;
+      actualizarTemporizadorDisplay();
+    }
+  }, 1000);
+}
+
+function actualizarTemporizadorDisplay() {
+  const timerDiv = document.getElementById("temporizador");
+  if (!timerDiv) return;
+  const minutos = Math.floor(tiempoRestante / 60);
+  const segundos = tiempoRestante % 60;
+  timerDiv.innerHTML = `⏱️ ${minutos}:${segundos < 10 ? '0' : ''}${segundos}`;
+  timerDiv.style.color = tiempoRestante <= 30 ? "#ffaa00" : "#00ffff";
+}
+
+function reiniciarTemporizador() {
+  if (gmailToken && tiempoRestante > 0) {
+    tiempoRestante = TIEMPO_INACTIVIDAD;
+    actualizarTemporizadorDisplay();
+  }
+}
+
+function activarDetectorInactividad() {
+  const eventos = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+  eventos.forEach(evento => window.addEventListener(evento, () => reiniciarTemporizador()));
+}
+
+// ========== CIERRE DE SESIÓN ==========
+function cerrarSesion() {
+  gmailToken = null;
+  cuentas = [];
+  if (intervalo) clearInterval(intervalo);
+  sessionStorage.removeItem("gmail_token");
+  sessionStorage.removeItem("acceso_validado");
+  document.getElementById("lista-cuentas").innerHTML = "";
+  document.getElementById("resultados").innerHTML = "";
+  document.getElementById("temporizador").innerHTML = "⏱️ 5:00";
+  mostrarEstado("🔒 Sesión cerrada", "warning");
+  setTimeout(() => window.location.href = "index.html", 1500);
+}
+
+// ========== INICIALIZACIÓN ==========
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', iniciarPanel);
+} else {
+  iniciarPanel();
+}
+
+function iniciarPanel() {
+  if (window.location.pathname.includes("panel.html")) {
+    verificarAcceso();
+    const estadoDiv = document.getElementById("estado");
+    if (estadoDiv) {
+      estadoDiv.innerHTML = "💡 Haz clic en 'Conectar Gmail' para empezar";
+      estadoDiv.style.color = "#888";
+    }
+    const tokenGuardado = sessionStorage.getItem("gmail_token");
+    if (tokenGuardado) {
+      gmailToken = tokenGuardado;
+      conectarGmail();
+      iniciarTemporizador();
+      activarDetectorInactividad();
+    }
+  }
 }
